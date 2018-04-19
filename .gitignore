@@ -1,0 +1,12 @@
+#Folder views configuration files
+**/.DS_Store
+.DS_Store
+
+# Thumbnail cache files
+._*
+Thumbs.db
+
+.node*
+
+node_modules/
+.idea/
