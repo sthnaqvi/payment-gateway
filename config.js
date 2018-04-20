@@ -2,7 +2,7 @@ var env = process.env.NODE_ENV || 'development';
 
 var config = {
     'development':{
-        'port': process.env.PORT || '3000',
+        'port': process.env.PORT || '3001',
         'db': 'mongodb://test:test123@ds251889.mlab.com:51889/payment-gateway',
         'api': 'v1',
         'secretKey': 'jndfuddsjnk48hu237e2ff4hf',
