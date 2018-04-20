@@ -15,36 +15,36 @@ var BitcoinUtils = require('../../utils/bitcoin');
 var bluebird = require('bluebird');
 var bitcore = require('bitcore-lib');
 
-function Payment() {}
-
+function Payment() {
+}
 
 
 /*@todo: Maintain nonce counter for each address in db*/
-Payment.prototype.ethPayment = function(amount, privateKey, concernedAddress, isConcernedAddressHotWallet, isWithdrawal){
-    return new bluebird.Promise(function(resolve, reject){
+Payment.prototype.ethPayment = function (amount, privateKey, concernedAddress, isConcernedAddressHotWallet, isWithdrawal) {
+    return new bluebird.Promise(function (resolve, reject) {
         var wallet = new ethers.Wallet(aes.decrypt(privateKey, config.secretKey).toString(CryptoJS.enc.Utf8));
         wallet.provider = provider;
         var transaction = {
             to: concernedAddress
         };
         provider.getBalance(wallet.address)
-            .then(function(balance){
-                if(isConcernedAddressHotWallet)
+            .then(function (balance) {
+                if (isConcernedAddressHotWallet)
                     transaction.value = balance;
                 else
                     transaction.value = utils.parseEther(amount);
                 return wallet.estimateGas(transaction)
             })
-            .then(function(gasEstimate) {
+            .then(function (gasEstimate) {
                 console.log(gasEstimate.toString());
                 transaction.gasLimit = gasEstimate;
-                if(isConcernedAddressHotWallet)
+                if (isConcernedAddressHotWallet)
                     transaction.value = transaction.value - (gasEstimate * 10000000000);
                 else
                     transaction.value = utils.bigNumberify(transaction.value).add(utils.bigNumberify(gasEstimate * 10000000000));
                 return wallet.sendTransaction(transaction);
             })
-            .then(function(transaction) {
+            .then(function (transaction) {
                 var tx = new Transaction();
                 tx.Wallet = transaction.from;
                 tx.Currency = "ETH";
@@ -56,42 +56,42 @@ Payment.prototype.ethPayment = function(amount, privateKey, concernedAddress, is
                 tx.Extra = transaction;
                 return tx.save();
             })
-            .then(function(tx){
-                if(isWithdrawal){
+            .then(function (tx) {
+                if (isWithdrawal) {
                     return provider.waitForTransaction(tx.Hash);
                 }
-                else{
+                else {
                     return provider.waitForTransaction(tx.Hash);
                 }
 
             })
-            .then(function(transaction){
+            .then(function (transaction) {
                 resolve(transaction);
             })
-            .catch(function(error){
+            .catch(function (error) {
                 reject(error);
             })
     })
 
 };
 
-Payment.prototype.erc20Payment = function(amount, privateKey, fromAddress, toAddress, isWithdrawal){
+Payment.prototype.erc20Payment = function (amount, privateKey, fromAddress, toAddress, isWithdrawal, contractAddress, tokenDecimals) {
     var wallet = new ethers.Wallet(aes.decrypt(privateKey, config.secretKey).toString(CryptoJS.enc.Utf8));
     wallet.provider = provider;
     console.log(toAddress);
     var availableBalance;
     var erc20Tx = {
-        to: config.erc20.contractAddress
+        to: contractAddress
     };
     var to = toAddress;
-    return new bluebird.Promise(function(resolve, reject) {
+    return new bluebird.Promise(function (resolve, reject) {
         PaymentUtils.getERC20Balance(fromAddress)
             .then(function (balance) {
                 erc20Tx.gasLimit = 81000;
-                if(isWithdrawal){
-                    availableBalance = (parseInt(amount) * Math.pow(10, config.erc20.decimal));
+                if (isWithdrawal) {
+                    availableBalance = (parseInt(amount) * Math.pow(10, tokenDecimals));
                 }
-                else{
+                else {
                     availableBalance = (parseInt(balance));
                 }
 
@@ -99,7 +99,7 @@ Payment.prototype.erc20Payment = function(amount, privateKey, fromAddress, toAdd
                 console.log(erc20Tx);
                 return wallet.sendTransaction(erc20Tx);
             })
-            .then(function(transaction) {
+            .then(function (transaction) {
                 var tx = new Transaction();
                 tx.Wallet = fromAddress;
                 tx.Currency = "ERC20";
@@ -111,37 +111,37 @@ Payment.prototype.erc20Payment = function(amount, privateKey, fromAddress, toAdd
                 tx.Extra = transaction;
                 return tx.save();
             })
-            .then(function(tx){
-                if(isWithdrawal){
+            .then(function (tx) {
+                if (isWithdrawal) {
                     // return tx.Extra
                     return provider.waitForTransaction(tx.Hash);
                 }
-                else{
+                else {
                     return provider.waitForTransaction(tx.Hash);
                 }
             })
-            .then(function(transaction){
+            .then(function (transaction) {
                 resolve(transaction);
             })
-            .catch(function(error){
+            .catch(function (error) {
                 reject(error);
             })
     })
 };
 
-Payment.prototype.btcPayment = function(amount, privateKey, fromAddress, toAddress){
+Payment.prototype.btcPayment = function (amount, privateKey, fromAddress, toAddress) {
     var privKey = bitcore.PrivateKey.fromWIF(aes.decrypt(privateKey, config.secretKey).toString(CryptoJS.enc.Utf8));
     var sourceAddress;
-    if(config.btc.network === "testnet"){
+    if (config.btc.network === "testnet") {
         sourceAddress = privKey.toAddress(bitcore.Networks.testnet);
     }
-    else{
+    else {
         sourceAddress = privKey.toAddress(bitcore.Networks.livenet);
     }
     console.log(sourceAddress);
-    return new bluebird.Promise(function(resolve, reject){
+    return new bluebird.Promise(function (resolve, reject) {
         BitcoinUtils.getUtxos(sourceAddress.toString())
-            .then(function(utxos){
+            .then(function (utxos) {
                 var tx = new bitcore.Transaction().fee(7000);
 
                 tx.from(utxos);
@@ -151,10 +151,10 @@ Payment.prototype.btcPayment = function(amount, privateKey, fromAddress, toAddre
 
                 return tx.serialize();
             })
-            .then(function(serializedTx){
+            .then(function (serializedTx) {
                 return BitcoinUtils.broadcastTx(serializedTx)
             })
-            .then(function(res){
+            .then(function (res) {
                 var tx = new Transaction();
                 tx.Wallet = sourceAddress.toString();
                 tx.Currency = "BTC";
@@ -166,10 +166,10 @@ Payment.prototype.btcPayment = function(amount, privateKey, fromAddress, toAddre
                 tx.Extra = res;
                 return tx.save();
             })
-            .then(function(tx){
+            .then(function (tx) {
                 resolve(tx.Hash)
             })
-            .catch(function(error){
+            .catch(function (error) {
                 reject(error);
             })
     })

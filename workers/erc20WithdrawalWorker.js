@@ -31,7 +31,7 @@ var processWithdrawal = function(withdrawalRequests){
         // console.log(request);
         // console.log(request.WithdrawalAddress);
         // console.log(request.Amount);
-        Payment.erc20Payment(request.Amount, config.erc20WithdrawalKey, config.erc20WithdrawalWallet, request.WithdrawalAddress, true)
+        Payment.erc20Payment(request.Amount, config.erc20WithdrawalKey, config.erc20WithdrawalWallet, request.WithdrawalAddress, true, )
             .then(function(transaction){
                 updateWithdrawalStatus(request, transaction)
             })

@@ -38,7 +38,17 @@ var invoiceSchema = new mongoose.Schema({
         },
         PublicKey: {
             type: String
+        },
+        ContractAddress: {
+            type: String
+        },
+        TokenDecimals: {
+            type: Number
+        },
+        TokenSymbol: {
+            type: String
         }
+
     },
     BlockConfirmation: {
         type: Number,
